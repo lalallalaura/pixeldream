@@ -57,74 +57,215 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeLightbox();
 });
 
-// Player de áudio: coloque sua faixa em assets/track.mp3
-const audio = document.getElementById("audio");
+
+// ==========================================
+// NAYEON MEDIA PLAYER — SOUNDCLOUD
+// ==========================================
+
+const soundcloudIframe = document.getElementById("soundcloud-widget");
+
 const playButton = document.getElementById("play");
+const previousButton = document.getElementById("previous");
+const nextButton = document.getElementById("next");
+const muteButton = document.getElementById("mute");
+
 const seek = document.getElementById("seek");
 const volume = document.getElementById("volume");
-const muteButton = document.getElementById("mute");
-const restartButton = document.getElementById("restart");
+
 const currentTimeLabel = document.getElementById("current-time");
 const durationLabel = document.getElementById("duration");
-const playerWindow = document.querySelector(".player-window");
 
-const formatTime = (seconds) => {
-  if (!Number.isFinite(seconds)) return "0:00";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
-  return `${mins}:${secs}`;
+const trackTitle = document.getElementById("track-title");
+const trackArtist = document.getElementById("track-artist");
+
+const albumImage = document.querySelector(".album-art img");
+const playerWindow = document.querySelector(".player-window");
+const soundHint = document.querySelector(".sound-hint");
+
+let widget = null;
+let widgetReady = false;
+let isPlaying = false;
+let isMuted = false;
+let previousVolume = 70;
+let durationMs = 0;
+
+const formatTime = (milliseconds) => {
+  if (!Number.isFinite(milliseconds) || milliseconds < 0) return "0:00";
+
+  const seconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(seconds / 60);
+
+  return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
 };
 
-playButton.addEventListener("click", async () => {
-  if (!audio.src || audio.error) {
-    document.querySelector(".sound-hint").textContent =
-      "ADICIONE UM ARQUIVO MP3 EM assets/track.mp3 PARA USAR O PLAYER.";
+const showMessage = (message) => {
+  if (soundHint) soundHint.textContent = message;
+};
+
+const updateTrack = (sound) => {
+  if (!sound) return;
+
+  trackTitle.textContent = sound.title || "Unknown track";
+  trackArtist.textContent = sound.user?.username || "underscores";
+
+  if (sound.artwork_url) {
+    albumImage.src = sound.artwork_url;
+    albumImage.style.opacity = "1";
+  }
+
+  durationMs = sound.duration || durationMs;
+  durationLabel.textContent = formatTime(durationMs);
+
+  seek.value = 0;
+  currentTimeLabel.textContent = "0:00";
+};
+
+const refreshTrack = () => {
+  if (!widgetReady) return;
+
+  widget.getCurrentSound((sound) => {
+    if (sound) updateTrack(sound);
+  });
+
+  widget.getDuration((duration) => {
+    if (Number.isFinite(duration) && duration > 0) {
+      durationMs = duration;
+      durationLabel.textContent = formatTime(duration);
+    }
+  });
+};
+
+const setPlaying = (playing) => {
+  isPlaying = playing;
+
+  playButton.textContent = playing ? "Ⅱ" : "▶";
+  playButton.setAttribute("aria-label", playing ? "Pausar" : "Reproduzir");
+
+  playerWindow.classList.toggle("is-playing", playing);
+};
+
+const setPlayerVolume = (value) => {
+  const normalized = Math.max(0, Math.min(100, value));
+
+  widget.setVolume(normalized);
+
+  volume.value = normalized / 100;
+  isMuted = normalized === 0;
+
+  muteButton.textContent = isMuted ? "♪̸" : "♫";
+};
+
+// Inicialização do SoundCloud
+if (window.SC && soundcloudIframe) {
+  widget = window.SC.Widget(soundcloudIframe);
+
+  const events = window.SC.Widget.Events;
+
+  widget.bind(events.READY, () => {
+    widgetReady = true;
+
+    widget.setVolume(70);
+
+    refreshTrack();
+
+    showMessage("PLAYLIST CONECTADA · UNDERSCORES — U");
+  });
+
+  widget.bind(events.PLAY, () => {
+    setPlaying(true);
+    refreshTrack();
+  });
+
+  widget.bind(events.PAUSE, () => {
+    setPlaying(false);
+  });
+
+  widget.bind(events.PLAY_PROGRESS, (data) => {
+    if (!data) return;
+
+    currentTimeLabel.textContent = formatTime(data.currentPosition || 0);
+
+    if (durationMs > 0) {
+      seek.value = (data.currentPosition / durationMs) * 100;
+    }
+  });
+
+  widget.bind(events.SEEK, () => {
+    refreshTrack();
+  });
+
+  widget.bind(events.FINISH, () => {
+    setPlaying(false);
+    refreshTrack();
+  });
+
+  widget.bind(events.ERROR, () => {
+    setPlaying(false);
+
+    showMessage(
+      "ERRO AO CARREGAR A PLAYLIST. TENTE ABRIR PELO SOUNDCLOUD."
+    );
+  });
+
+} else {
+  showMessage("NÃO FOI POSSÍVEL CARREGAR O SOUNDCLOUD.");
+}
+
+// Play / Pause
+playButton.addEventListener("click", () => {
+  if (!widgetReady) {
+    showMessage("AGUARDE O CARREGAMENTO DA PLAYLIST...");
     return;
   }
-  if (audio.paused) {
-    try { await audio.play(); } catch (error) {
-      document.querySelector(".sound-hint").textContent =
-        "NÃO FOI POSSÍVEL REPRODUZIR. CONFIRA O ARQUIVO assets/track.mp3.";
-    }
+
+  if (isPlaying) {
+    widget.pause();
   } else {
-    audio.pause();
+    widget.play();
   }
 });
 
-audio.addEventListener("play", () => {
-  playButton.textContent = "Ⅱ";
-  playerWindow.classList.add("is-playing");
+// Faixa anterior
+previousButton.addEventListener("click", () => {
+  if (widgetReady) widget.prev();
 });
-audio.addEventListener("pause", () => {
-  playButton.textContent = "▶";
-  playerWindow.classList.remove("is-playing");
+
+// Próxima faixa
+nextButton.addEventListener("click", () => {
+  if (widgetReady) widget.next();
 });
-audio.addEventListener("loadedmetadata", () => {
-  durationLabel.textContent = formatTime(audio.duration);
-});
-audio.addEventListener("timeupdate", () => {
-  currentTimeLabel.textContent = formatTime(audio.currentTime);
-  durationLabel.textContent = formatTime(audio.duration);
-  if (Number.isFinite(audio.duration) && audio.duration > 0) {
-    seek.value = (audio.currentTime / audio.duration) * 100;
-  }
-});
+
+// Progresso
 seek.addEventListener("input", () => {
-  if (Number.isFinite(audio.duration) && audio.duration > 0) {
-    audio.currentTime = (Number(seek.value) / 100) * audio.duration;
+  if (!widgetReady || durationMs <= 0) return;
+
+  widget.seekTo((Number(seek.value) / 100) * durationMs);
+});
+
+// Volume
+volume.addEventListener("input", () => {
+  if (!widgetReady) return;
+
+  const value = Number(volume.value) * 100;
+
+  if (value > 0) previousVolume = value;
+
+  isMuted = value === 0;
+
+  widget.setVolume(value);
+
+  muteButton.textContent = isMuted ? "♪̸" : "♫";
+});
+
+// Mudo
+muteButton.addEventListener("click", () => {
+  if (!widgetReady) return;
+
+  if (isMuted) {
+    setPlayerVolume(previousVolume || 70);
+  } else {
+    previousVolume = Number(volume.value) * 100 || 70;
+    setPlayerVolume(0);
   }
 });
-volume.addEventListener("input", () => {
-  audio.volume = Number(volume.value);
-  audio.muted = audio.volume === 0;
-  muteButton.textContent = audio.muted ? "♪̸" : "♫";
-});
-muteButton.addEventListener("click", () => {
-  audio.muted = !audio.muted;
-  muteButton.textContent = audio.muted ? "♪̸" : "♫";
-});
-restartButton.addEventListener("click", () => {
-  audio.currentTime = 0;
-  if (audio.paused) audio.play().catch(() => {});
-});
-audio.volume = Number(volume.value);
+
