@@ -17,7 +17,7 @@
   <div class="grain"></div>
 
   <header class="topbar">
-    <a class="brand" href="#home" aria-label="Nayeon.exe início">
+    <a class="brand" href="#home" aria-label="PIXEL.exe início">
       <span class="brand-orb"></span>
       <span>NAYEON<span class="brand-dot">.EXE</span></span>
     </a>
@@ -36,7 +36,7 @@
       <div class="hero-orbit orbit-two"></div>
       <div class="hero-copy reveal">
         <p class="eyebrow"><span class="eyebrow-line"></span> YOUR PORTAL TO A DIGITAL PARADISE</p>
-        <h1>WELCOME TO<br><span>NAYEON'S</span><br>WORLD<span class="asterisk">✳</span></h1>
+        <h1>WELCOME TO<br><span>PIXEL'S</span><br>WORLD<span class="asterisk">✳</span></h1>
         <p class="hero-description">A little bit of sunshine, a little bit of fantasy.<br>Welcome to this lovely corner of the internet.</p>
         <a class="enter-link" href="#universe"><span class="enter-icon">↓</span> EXPLORE THE WORLD</a>
       </div>
@@ -44,10 +44,10 @@
       <div class="hero-photo-wrap reveal reveal-delay-2">
         <div class="photo-halo"></div>
         <div class="hero-photo-frame">
-          <img src="assets/nayeon-hero.jpg" alt="Foto de Nayeon" class="hero-photo" onerror="this.style.opacity='0'">
+          <img src="assets/frutiger-hero.jpg" alt="Pixelated Dream" class="hero-photo" onerror="this.style.opacity='0'">
           <div class="photo-placeholder">
             <span class="placeholder-spark">✦</span>
-            <strong>YOUR<br>NAYEON<br>PHOTO HERE</strong>
+            <strong>YOUR<br>FAVE<br>PHOTO HERE</strong>
             <small>assets/nayeon-hero.jpg</small>
           </div>
           <span class="photo-sticker sticker-top">♡ 100% sunshine</span>
@@ -133,7 +133,7 @@
       </div>
       <div class="player-window reveal reveal-delay-1">
         <div class="player-titlebar">
-          <div class="player-brand"><span class="player-mini-logo">◉</span> NAYEON MEDIA PLAYER</div>
+          <div class="player-brand"><span class="player-mini-logo">◉</span> AERO MEDIA PLAYER</div>
           <div class="player-controls"><span>_</span><span>□</span><span>×</span></div>
         </div>
         <div class="player-body">
@@ -145,17 +145,25 @@
           <div class="track-info">
             <p class="track-label">NOW PLAYING</p>
             <h3 id="track-title">A little sunshine</h3>
-            <p id="track-artist">NAYEON.EXE PLAYLIST</p>
+            <p id="track-artist">PIXEL.EXE PLAYLIST</p>
             <div class="progress-area">
               <input type="range" id="seek" min="0" max="100" value="0" aria-label="Progresso da música">
               <div class="time-row"><span id="current-time">0:00</span><span id="duration">0:00</span></div>
             </div>
-            <div class="player-actions">
-              <button class="player-button secondary" id="restart" aria-label="Reiniciar">↶</button>
-              <button class="player-button play-button" id="play" aria-label="Reproduzir">▶</button>
-              <button class="player-button secondary" id="mute" aria-label="Ativar ou desativar som">♫</button>
-              <label class="volume-wrap" aria-label="Volume"><span>VOL</span><input type="range" id="volume" min="0" max="1" step="0.01" value="0.7"></label>
-            </div>
+              <div class="player-actions">
+  <button class="player-button secondary" id="previous" aria-label="Música anterior">◀</button>
+
+  <button class="player-button play-button" id="play" aria-label="Reproduzir">▶</button>
+
+  <button class="player-button secondary" id="next" aria-label="Próxima música">▶|</button>
+
+  <button class="player-button secondary" id="mute" aria-label="Ativar ou desativar som">♫</button>
+
+  <label class="volume-wrap" aria-label="Volume">
+    <span>VOL</span>
+    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.7">
+  </label>
+</div>
           </div>
         </div>
         <div class="player-footer"><span><i class="equalizer"><b></b><b></b><b></b><b></b></i> STEREO</span><span>VISUALIZATION: AQUA DREAM</span><span>♥</span></div>
