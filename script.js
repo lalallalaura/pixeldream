@@ -89,6 +89,15 @@ let isMuted = false;
 let previousVolume = 70;
 let durationMs = 0;
 
+// Preenchimento visual das barras (slider)
+const paintRange = (input) => {
+  if (!input) return;
+  const min = Number(input.min) || 0;
+  const max = Number(input.max) || 100;
+  const pct = ((Number(input.value) - min) / (max - min)) * 100;
+  input.style.setProperty("--fill", `${Math.max(0, Math.min(100, pct))}%`);
+};
+
 const formatTime = (milliseconds) => {
   if (!Number.isFinite(milliseconds) || milliseconds < 0) return "0:00";
 
@@ -117,6 +126,7 @@ const updateTrack = (sound) => {
   durationLabel.textContent = formatTime(durationMs);
 
   seek.value = 0;
+  paintRange(seek);
   currentTimeLabel.textContent = "0:00";
 };
 
@@ -150,6 +160,7 @@ const setPlayerVolume = (value) => {
   widget.setVolume(normalized);
 
   volume.value = normalized / 100;
+  paintRange(volume);
   isMuted = normalized === 0;
 
   muteButton.textContent = isMuted ? "♪̸" : "♫";
@@ -187,6 +198,7 @@ if (window.SC && soundcloudIframe) {
 
     if (durationMs > 0) {
       seek.value = (data.currentPosition / durationMs) * 100;
+      paintRange(seek);
     }
   });
 
@@ -239,11 +251,13 @@ nextButton.addEventListener("click", () => {
 seek.addEventListener("input", () => {
   if (!widgetReady || durationMs <= 0) return;
 
+  paintRange(seek);
   widget.seekTo((Number(seek.value) / 100) * durationMs);
 });
 
 // Volume
 volume.addEventListener("input", () => {
+  paintRange(volume);
   if (!widgetReady) return;
 
   const value = Number(volume.value) * 100;
@@ -257,6 +271,9 @@ volume.addEventListener("input", () => {
   muteButton.textContent = isMuted ? "♪̸" : "♫";
 });
 
+paintRange(seek);
+paintRange(volume);
+
 // Mudo
 muteButton.addEventListener("click", () => {
   if (!widgetReady) return;
@@ -269,3 +286,120 @@ muteButton.addEventListener("click", () => {
   }
 });
 
+
+
+// ==========================================
+// PIXELDREAM — TEMA DIA / NOITE
+// ==========================================
+const themeToggle = document.getElementById("theme-toggle");
+const themeIcon = themeToggle?.querySelector(".theme-toggle-icon");
+const themeLabel = themeToggle?.querySelector(".theme-toggle-label");
+
+const applyTheme = (isNight) => {
+  document.body.classList.toggle("night-mode", isNight);
+  if (themeToggle) {
+    themeToggle.setAttribute("aria-pressed", String(isNight));
+    themeToggle.setAttribute(
+      "aria-label",
+      isNight ? "Ativar modo diurno" : "Ativar modo noturno"
+    );
+  }
+  if (themeIcon) themeIcon.textContent = isNight ? "☀" : "☾";
+  if (themeLabel) themeLabel.textContent = isNight ? "DAY MODE" : "NIGHT MODE";
+  document.querySelector('meta[name="theme-color"]')?.setAttribute(
+    "content",
+    isNight ? "#071d38" : "#087db5"
+  );
+};
+
+let savedTheme = "day";
+try {
+  savedTheme = localStorage.getItem("pixeldream-theme") || "day";
+} catch (error) {
+  // O tema continua funcionando mesmo se o navegador bloquear o armazenamento.
+}
+applyTheme(savedTheme === "night");
+
+themeToggle?.addEventListener("click", () => {
+  const isNight = !document.body.classList.contains("night-mode");
+  applyTheme(isNight);
+  try {
+    localStorage.setItem("pixeldream-theme", isNight ? "night" : "day");
+  } catch (error) {
+    // A alternância permanece ativa durante esta visita.
+  }
+});
+
+// ==========================================
+// PIXELDREAM — CURSOR DE ESTRELINHA
+// ==========================================
+const sparkleCursor = document.getElementById("sparkle-cursor");
+const finePointer = window.matchMedia("(pointer: fine)").matches;
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+if (sparkleCursor && finePointer && !prefersReducedMotion) {
+  document.body.classList.add("custom-cursor");
+  let lastTrail = 0;
+
+  window.addEventListener("mousemove", (event) => {
+    sparkleCursor.style.left = `${event.clientX}px`;
+    sparkleCursor.style.top = `${event.clientY}px`;
+    sparkleCursor.classList.add("is-visible");
+
+    const now = performance.now();
+    if (now - lastTrail > 75) {
+      lastTrail = now;
+      const trail = document.createElement("span");
+      trail.className = "cursor-trail";
+      trail.textContent = Math.random() > 0.5 ? "✦" : "·";
+      trail.style.left = `${event.clientX + (Math.random() * 16 - 8)}px`;
+      trail.style.top = `${event.clientY + (Math.random() * 16 - 8)}px`;
+      document.body.appendChild(trail);
+      trail.addEventListener("animationend", () => trail.remove(), { once: true });
+    }
+  });
+
+  document.addEventListener("mouseleave", () => {
+    sparkleCursor.classList.remove("is-visible");
+  });
+  document.addEventListener("mouseenter", () => {
+    sparkleCursor.classList.add("is-visible");
+  });
+}
+
+
+// ==========================================
+// PIXELDREAM — NAVEGAÇÃO, FADES E ROLAGEM
+// ==========================================
+const topbar = document.querySelector(".topbar");
+const navLinks = [...document.querySelectorAll(".nav a")];
+
+// Barra superior ganha vidro ao rolar
+const updateTopbar = () => topbar?.classList.toggle("is-scrolled", window.scrollY > 40);
+window.addEventListener("scroll", updateTopbar, { passive: true });
+updateTopbar();
+
+// Cada seção surge com um fade suave ao entrar na tela
+const pageSections = document.querySelectorAll("main > section");
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("in-view");
+      sectionObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0, rootMargin: "0px 0px -8% 0px" });
+pageSections.forEach((section) => sectionObserver.observe(section));
+
+// Link ativo no menu conforme a seção na tela
+const linkById = new Map(
+  navLinks.map((link) => [link.getAttribute("href").slice(1), link])
+);
+const spyObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (!entry.isIntersecting) return;
+    navLinks.forEach((link) => link.classList.remove("is-active"));
+    linkById.get(entry.target.id)?.classList.add("is-active");
+  });
+}, { rootMargin: "-45% 0px -50% 0px" });
+document.querySelectorAll("main > section[id]").forEach((section) => spyObserver.observe(section));
