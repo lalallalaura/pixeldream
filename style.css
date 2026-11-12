@@ -304,7 +304,7 @@ body.night-mode .volume-wrap input[type=range]{--track-bg:rgba(170,225,255,.16);
 .avatar-status{
   position:absolute;z-index:3;right:6px;bottom:8px;width:20px;height:20px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#fff 0 12%,#b9ff85 28%,#3fc866);
-  border:3px solid #fff;box-shadow:0 0 10px #9cff76;
+  border:1px solid #fff;box-shadow:0 0 10px #9cff76;
 }
 .profile-name{font:800 24px Orbitron,sans-serif;letter-spacing:-1px;color:#0877a5}
 .profile-role{font:8px Orbitron,sans-serif;letter-spacing:1.6px;color:#2396a8}
